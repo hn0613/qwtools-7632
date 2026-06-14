@@ -43,39 +43,38 @@ def find_random_media(request):
 
 
 def find_next_media_real(request, item_id):
-    item = KioskItem.objects.get(pk=item_id)
+    try:
+        item = KioskItem.objects.get(pk=item_id)
+    except KioskItem.DoesNotExist:
+        # The previously shown item was deleted or is no longer accessible.
+        # Fall back to the first active item so the carousel keeps running.
+        item = None
 
-    item_count = (
+    active_items = (
         KioskItem.objects.filter(active=True)
         .filter(
             (Q(start_datetime__isnull=True) | Q(start_datetime__lte=timezone.now()))
             & (Q(end_datetime__isnull=True) | Q(end_datetime__gte=timezone.now()))
         )
-        .count()
     )
+
+    item_count = active_items.count()
     if item_count == 0:
         raise Http404("No active kiosk items found")
 
-    # Get the item at the index, trust that Django does this smartly.
-    try:
+    # Get the next item in ordered sequence, wrapping around at the end.
+    next_item = None
+    if item is not None:
         next_item = (
-            KioskItem.objects.filter(active=True)
-            .filter(
-                (Q(start_datetime__isnull=True) | Q(start_datetime__lte=timezone.now()))
-                & (Q(end_datetime__isnull=True) | Q(end_datetime__gte=timezone.now()))
-            )
+            active_items
             .order_by('ordering', 'id')
-            .filter(Q(ordering__gt=item.ordering) | (Q(ordering=item.ordering) & Q(id__gt=item.id)))[0]
+            .filter(Q(ordering__gt=item.ordering) | (Q(ordering=item.ordering) & Q(id__gt=item.id)))
+            .first()
         )
-    except IndexError:
-        next_item = (
-            KioskItem.objects.filter(active=True)
-            .filter(
-                (Q(start_datetime__isnull=True) | Q(start_datetime__lte=timezone.now()))
-                & (Q(end_datetime__isnull=True) | Q(end_datetime__gte=timezone.now()))
-            )
-            .order_by('ordering', 'id')[0]
-        )
+
+    if next_item is None:
+        # Wrap around to the first active item
+        next_item = active_items.order_by('ordering', 'id').first()
 
     media_url = next_item.media.url if next_item.media else next_item.website_url
     is_image = next_item.is_image if next_item.media else False

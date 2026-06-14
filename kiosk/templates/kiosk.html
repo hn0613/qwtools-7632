@@ -16,79 +16,253 @@
     <div class="dummy"></div>
 
     <script>
-    var queue = [].slice.call(document.querySelectorAll(".dummy"));
-    var front = queue.shift();
-    var this_id = -1;
-    var currentDuration = 10000;
+    (function () {
+        "use strict";
 
-    function swap(tag) {
-        //Flip in the DOM
-        front.classList.remove("front");
+        /* ============================================================
+         *  Kiosk Slideshow Engine — rewritten to fix 7 state defects
+         *  that caused degradation during long-running display.
+         *
+         *  Design:
+         *  1. Strict cleanup: EVERY content transition clears BOTH
+         *     innerHTML and backgroundImage before writing new content.
+         *  2. Atomic duration: currentDuration is updated together
+         *     with content, inside the same XHR callback, and the
+         *     setTimeout is scheduled THERE (not at swap time).
+         *  3. XHR abort: any in-flight request is aborted before a
+         *     new cycle begins, preventing concurrent XHR races.
+         *  4. XHR timeout: 10 s hard cap prevents hanging requests.
+         *  5. transitionend fallback: if the browser skips the CSS
+         *     transition (element hidden, property unchanged, etc.),
+         *     a 500 ms fallback timer ensures the cycle still advances.
+         *  6. Proper scoping: all variables are local (IIFE + let/const).
+         *  7. Error recovery preserves last-known-good this_id so the
+         *     server-side carousel order is not disrupted. Only the
+         *     very first load (no prior item) uses /kiosk/random.
+         * ============================================================ */
 
-        queue.push(front);
-        front = queue.shift();
+        var FALLBACK_BG = "{% static 'kiosk/kioskbg.png' %}";
+        var XHR_TIMEOUT_MS = 10000;
+        var TRANSITION_FALLBACK_MS = 500;
+        var DEFAULT_DURATION = 10000;
 
-        front.classList.add("front");
-    }
+        // --- DOM references (two-layer crossfade) ---
+        var layers = [].slice.call(document.querySelectorAll(".dummy"));
+        var frontLayer = layers.shift();   // currently visible
+        var backLayer  = layers[0];        // next-content target
 
-    function updateKiosk() {
-        var t = front;
-        t.addEventListener("transitionend", function loadnext(tag) {
-            t.removeEventListener("transitionend", loadnext);
-            var xmlHttp = new XMLHttpRequest();
-            xmlHttp.onreadystatechange = function() {
-                if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-                    obj = JSON.parse(xmlHttp.responseText);
-                    this_id = obj.id;
-                    t.style.backgroundImage = '';
-                    if (obj.has_media) {
-                        if (!obj.is_image) {
-                            t.style.backgroundImage = '';
-                            t.innerHTML = //
-                                '<center class="scale">' + //
-                                '<video class="scale" autoplay muted loop id="video"><source src="' + obj.url + '" type="video/mp4">' + //
-                                '</video>'+ //
-                                '</center>';
-                        } else {
-                            t.innerHTML = '';
-                            t.style.backgroundImage = 'url("' + obj.url +'")';
-                        }
+        // --- State ---
+        var currentId       = -1;          // -1 = first load, no prior item
+        var lastGoodId      = -1;          // last successfully loaded item id
+        var currentDuration = DEFAULT_DURATION;
+        var activeXHR       = null;        // in-flight request (for abort)
+        var cycleTimer      = null;        // setTimeout id for next cycle
+        var transitionTimer = null;        // fallback for missed transitionend
+
+        /* --------------------------------------------------------
+         *  cleanLayer(el)
+         *  Fully reset a layer: remove all child nodes (video,
+         *  iframe, etc.) AND clear background-image. This ensures
+         *  no residual content survives a content-type switch.
+         * -------------------------------------------------------- */
+        function cleanLayer(el) {
+            // Stop any playing video before removing it
+            var video = el.querySelector("video");
+            if (video) {
+                video.pause();
+                video.removeAttribute("src");
+                video.load();
+            }
+            // Stop any iframe from continuing to load/execute
+            var iframe = el.querySelector("iframe");
+            if (iframe) {
+                iframe.src = "about:blank";
+            }
+            el.innerHTML = "";
+            el.style.backgroundImage = "";
+        }
+
+        /* --------------------------------------------------------
+         *  scheduleNext()
+         *  Centralised scheduling. Called exactly once per cycle,
+         *  always using the most up-to-date currentDuration.
+         * -------------------------------------------------------- */
+        function scheduleNext() {
+            if (cycleTimer) {
+                clearTimeout(cycleTimer);
+                cycleTimer = null;
+            }
+            cycleTimer = setTimeout(runCycle, currentDuration);
+        }
+
+        /* --------------------------------------------------------
+         *  showContent(data)
+         *  Render one piece of content onto the back layer, then
+         *  swap and schedule the next cycle. Handles all content
+         *  types uniformly. `data` may be null (error / no content)
+         *  in which case the fallback background is shown.
+         * -------------------------------------------------------- */
+        function showContent(data) {
+            // --- Step 1: clean the back layer unconditionally ---
+            cleanLayer(backLayer);
+
+            // --- Step 2: write new content ---
+            if (data) {
+                currentId       = data.id;
+                lastGoodId      = data.id;
+                currentDuration = data.duration || DEFAULT_DURATION;
+
+                if (data.has_media) {
+                    if (data.is_image) {
+                        // Image: CSS background
+                        backLayer.style.backgroundImage = 'url("' + data.url + '")';
                     } else {
-                        t.style.backgroundImage = '';
-                        t.innerHTML = 
-                            '<iframe class="scale" ' +
-                            'src="' + obj.url + '" ' +
-                            'style="width:100%;height:100%;border:none;"></iframe>';
+                        // Video: DOM element
+                        backLayer.innerHTML =
+                            '<center class="scale">' +
+                            '<video class="scale" autoplay muted loop>' +
+                            '<source src="' + data.url + '" type="video/mp4">' +
+                            '</video></center>';
                     }
-
-                    // Use the duration from the server response
-                    currentDuration = obj.duration || 10000;  // Default to 10 seconds if not provided
-                } else if (xmlHttp.readyState == 4) {
-                    // Response received, but no image was sent from server
-                    t.style.backgroundImage = 'url("{% static "kiosk/kioskbg.png" %}")';
-                    this_id = -1;
+                } else if (data.url) {
+                    // Website / iframe
+                    backLayer.innerHTML =
+                        '<iframe class="scale" ' +
+                        'src="' + data.url + '" ' +
+                        'style="width:100%;height:100%;border:none;"></iframe>';
+                } else {
+                    // No media and no url — treat as error
+                    backLayer.style.backgroundImage = 'url("' + FALLBACK_BG + '")';
                 }
-            }
-
-            //Start by asking random for the first image
-            if(this_id === -1) {
-                xmlHttp.open("GET", "/kiosk/random", true);
             } else {
-                xmlHttp.open("GET", "/kiosk/next_real/" + this_id + "/", true);
+                // --- Error / no content: show fallback, keep lastGoodId ---
+                backLayer.style.backgroundImage = 'url("' + FALLBACK_BG + '")';
+                // Do NOT touch currentId or lastGoodId here so that
+                // the next cycle can resume the ordered carousel from
+                // the last successfully shown item.
             }
-            xmlHttp.send(null);
 
-        });
+            // --- Step 3: swap front/back and start transition ---
+            swap();
 
-        swap();
+            // --- Step 4: schedule next cycle from HERE ---
+            // This guarantees duration is always the one belonging to
+            // the content just shown, eliminating the off-by-one lag.
+            scheduleNext();
+        }
 
-        // Set a timeout to update the kiosk again after the dynamic duration
-        setTimeout(updateKiosk, currentDuration);
-    }
+        /* --------------------------------------------------------
+         *  swap()
+         *  Exchange front/back layers and trigger the CSS opacity
+         *  crossfade transition.
+         * -------------------------------------------------------- */
+        function swap() {
+            frontLayer.classList.remove("front");
+            backLayer.classList.add("front");
 
-    // Initial call to start the cycle
-    updateKiosk();
+            // Rotate references
+            var tmp     = frontLayer;
+            frontLayer  = backLayer;
+            backLayer   = tmp;
+        }
 
+        /* --------------------------------------------------------
+         *  fetchAndShow(url)
+         *  Make an XHR request, parse the JSON response, and hand
+         *  it to showContent(). On any error, pass null so the
+         *  fallback path is used. Aborts any prior in-flight XHR.
+         * -------------------------------------------------------- */
+        function fetchAndShow(url) {
+            // Abort any lingering request from the previous cycle
+            if (activeXHR) {
+                activeXHR.abort();
+                activeXHR = null;
+            }
+
+            var xhr = new XMLHttpRequest();
+            activeXHR = xhr;
+
+            xhr.timeout = XHR_TIMEOUT_MS;
+            var settled = false;
+
+            function finish(data) {
+                if (settled) return;   // guard against double-fire
+                settled = true;
+                activeXHR = null;
+                showContent(data);
+            }
+
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState !== 4) return;
+                if (xhr.status === 200) {
+                    try {
+                        var obj = JSON.parse(xhr.responseText);
+                        finish(obj);
+                    } catch (e) {
+                        finish(null);
+                    }
+                } else {
+                    // Non-200 (including 404 "no active items")
+                    finish(null);
+                }
+            };
+
+            xhr.ontimeout = function () { finish(null); };
+            xhr.onerror   = function () { finish(null); };
+            xhr.onabort   = function () { /* intentional abort, do nothing */ };
+
+            xhr.open("GET", url, true);
+            xhr.send(null);
+        }
+
+        /* --------------------------------------------------------
+         *  runCycle()
+         *  One complete cycle: wait for the CSS transition to end
+         *  on the outgoing front layer, then fetch next content.
+         *  Includes a fallback timer in case transitionend never
+         *  fires (element hidden, browser optimisation, etc.).
+         * -------------------------------------------------------- */
+        function runCycle() {
+            cycleTimer = null;
+
+            var outgoing = frontLayer;
+            var fired = false;
+
+            function onLoad() {
+                if (fired) return;
+                fired = true;
+                // Clear fallback timer
+                if (transitionTimer) {
+                    clearTimeout(transitionTimer);
+                    transitionTimer = null;
+                }
+                outgoing.removeEventListener("transitionend", onLoad);
+
+                // Build the URL for the next item
+                var url;
+                if (lastGoodId === -1) {
+                    // Very first load — pick a random item
+                    url = "/kiosk/random";
+                } else {
+                    url = "/kiosk/next_real/" + lastGoodId + "/";
+                }
+                fetchAndShow(url);
+            }
+
+            outgoing.addEventListener("transitionend", onLoad);
+
+            // Fallback: if transitionend doesn't fire within 500 ms
+            // (browser skipped transition, tab was hidden, etc.),
+            // proceed anyway so the cycle never stalls.
+            transitionTimer = setTimeout(onLoad, TRANSITION_FALLBACK_MS);
+        }
+
+        /* --------------------------------------------------------
+         *  Boot: start the first cycle immediately.
+         * -------------------------------------------------------- */
+        runCycle();
+
+    })();
     </script>
 </body>
 
