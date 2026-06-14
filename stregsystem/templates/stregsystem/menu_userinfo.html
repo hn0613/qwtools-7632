@@ -7,17 +7,7 @@
 {% block content %}
 
 <main class="center">
-   <h3>{{member.firstname}} {{member.lastname}} ({{member.email}})</h3>
-
-   <h2><a href="/{{room.id}}/sale/{{member.id}}">Tilbage til produktmenu</a></h2>
-
-   {% spaceless %}
-   <h4>Du {% if negative_balance %}
-   skylder <span style="color: red;">{{member.balance|money|cut:"-"}}</span> kroner
-   {% else %}har {{member.balance|money}} kroner til gode!
-   {% endif %}
-   </h4>
-   {% endspaceless %}
+   {% include "stregsystem/_menu_nav.html" with active_nav="info" %}
 
    {% if stregforbud %}
       <h1 style="color: red;"><blink>STREGFORBUD!</blink></h1>

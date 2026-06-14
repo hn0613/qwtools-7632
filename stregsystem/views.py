@@ -347,6 +347,7 @@ def menu_userrank(request, room_id, member_id):
     to_date = datetime.datetime.now(tz=pytz.timezone("Europe/Copenhagen"))
     room = Room.objects.get(pk=room_id)
     member = Member.objects.get(pk=member_id, active=True)
+    negative_balance = member.balance < 0
 
     if not member.signup_due_paid:
         return render(request, 'stregsystem/error_signupdue.html', locals())

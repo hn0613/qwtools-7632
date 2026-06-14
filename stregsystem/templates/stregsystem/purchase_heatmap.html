@@ -1,4 +1,4 @@
-<div class="heatmap-table-container" onmouseenter="updateAllProductNumbers(false)" onmouseleave="updateAllProductNumbers(true);changeTile('', true)">
+<div class="heatmap-table-container">
     <div class="heatmap-header">
         <h2 class="heatmap-header-title">Forbrugsoversigt (Antal)</h2>
     </div>
@@ -16,7 +16,7 @@
             <tr class="heatmap-row">
                 <td class="heatmap-label heatmap-label-first"><span>{{weekday_label}}</span></td>
                 {% for day_data in weekday_data %}
-                <td class="heatmap-cell" title="{{day_data.date}}" data-date="{{day_data.date}}" data-products="{{day_data.products}}" onmouseenter="dayCellOnEnter(this)" onmouseleave="dayCellOnLeave(this)"
+                <td class="heatmap-cell" title="{{day_data.date}}" data-date="{{day_data.date}}" data-products="{{day_data.products}}"
                     {% for summary in day_data.summary %}data-summary{{forloop.counter0}}="{{summary}}"{% endfor %}
                     style="{% for color_value in day_data.color %}--cell-color-{{forloop.counter0}}: rgb{{color_value}};{% endfor %}">
                 </td>
@@ -99,6 +99,11 @@
     .heatmap-cell:hover {
         border-radius: 5px;
     }
+    .heatmap-cell.heatmap-cell-active {
+        border-radius: 5px;
+        outline: 2px solid rgba(0, 0, 0, 0.4);
+        outline-offset: 0px;
+    }
     .heatmap-mode-button {
         font-weight: normal;
     }
@@ -122,6 +127,9 @@
 </style>
 <script>
     let current_heatmap_mode = 0;
+    let activeTouchCell = null;
+    const isTouch = window.matchMedia('(hover: none)').matches;
+
     const heatmap_mode_names = [
         {% for heatmap_mode in heatmap_modes %}
             "{{heatmap_mode.mode_name}}",
@@ -134,7 +142,62 @@
         {% endfor %}
     ]
 
-    window.addEventListener("load", (_) => swapTableType(0));
+    window.addEventListener("load", (_) => {
+        const savedMode = sessionStorage.getItem('heatmap_mode');
+        const initialMode = (savedMode !== null && parseInt(savedMode) < heatmap_mode_names.length)
+            ? parseInt(savedMode) : 0;
+        swapTableType(initialMode);
+
+        const container = document.querySelector('.heatmap-table-container');
+        const cells = container.querySelectorAll('td.heatmap-cell[data-date]');
+
+        if (isTouch) {
+            cells.forEach(cell => {
+                cell.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (activeTouchCell === cell) {
+                        clearCellInfo();
+                        return;
+                    }
+                    if (activeTouchCell) {
+                        activeTouchCell.classList.remove('heatmap-cell-active');
+                        updateProductCounts(JSON.parse(activeTouchCell.dataset.products), true);
+                    }
+                    activeTouchCell = cell;
+                    cell.classList.add('heatmap-cell-active');
+                    updateAllProductNumbers(false);
+                    dayCellOnEnter(cell);
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!container.contains(e.target)) {
+                    clearCellInfo();
+                }
+            });
+        } else {
+            container.addEventListener('mouseenter', () => updateAllProductNumbers(false));
+            container.addEventListener('mouseleave', () => {
+                updateAllProductNumbers(true);
+                changeTile('', true);
+            });
+
+            cells.forEach(cell => {
+                cell.addEventListener('mouseenter', () => dayCellOnEnter(cell));
+                cell.addEventListener('mouseleave', () => dayCellOnLeave(cell));
+            });
+        }
+    });
+
+    function clearCellInfo() {
+        if (activeTouchCell) {
+            activeTouchCell.classList.remove('heatmap-cell-active');
+            updateProductCounts(JSON.parse(activeTouchCell.dataset.products), true);
+            activeTouchCell = null;
+        }
+        updateAllProductNumbers(true);
+        changeTile('', true);
+    }
 
     function swapTableType(index){
         const header_title = `Forbrugsoversigt (${heatmap_mode_description[index]})`
@@ -149,6 +212,7 @@
         document.getElementById(`heatmap-table-mode-description-${heatmap_mode_names[current_heatmap_mode]}`).style.display = 'none';
         document.getElementById(`heatmap-table-mode-description-${heatmap_mode_names[index]}`).style.display = 'inline-flex';
         current_heatmap_mode = index;
+        sessionStorage.setItem('heatmap_mode', index);
     }
 
     function updateAllProductNumbers(hide=false){

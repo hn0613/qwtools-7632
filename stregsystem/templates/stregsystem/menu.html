@@ -21,29 +21,8 @@
 {% block content %}
 
 <main class="center">
-  <h3>{{member.firstname}} {{member.lastname}} ({{member.email}})</h3>
+  {% include "stregsystem/_menu_nav.html" with active_nav="products" %}
 
-  <h4>Du
-    {% if negative_balance %}
-      skylder <span style="color: red;">{{member.balance|money|cut:"-"}}</span> kroner
-      {% else %}
-      har {{member.balance|money}} kroner til gode!
-    {% endif %}
-  </h4>
-
-  <nav id="sublinks" class="horizontal-table">
-      <a href="/{{room.id}}/user/{{member.id}}">Bruger Info</a>
-      <a href="/{{room.id}}/user/{{member.id}}/pay">Indsæt penge</a>
-      <a href="/{{room.id}}/user/{{member.id}}/rank">Rangliste</a>
-    {% comment %}
-      <a href="/{{room.id}}/user/{{member.id}}/undo">Fortryd køb</a>
-    {% endcomment %}
-
-    {% comment %}
-      <a href="/index.php3?multiple=1&user_id=2024">Multi-køb</a>
-    {% endcomment %}
-
-  </nav>
   <br />
 
   <span>Køb et produkt ved at trykke på et produktnavn i tabellerne nedenfor.</span>
@@ -79,7 +58,8 @@
   {% block products %}
     {% autoescape off %}
     {% if product_note_pair_list %}
-      <form method="post" action="/{{ room.id }}/sale/{{ member.id }}/" id="product-buy-form" name="product-buy-form">
+      <form method="post" action="/{{ room.id }}/sale/{{ member.id }}/" id="product-buy-form" name="product-buy-form"
+            onsubmit="this.querySelectorAll('.linkalike').forEach(b => b.disabled = true)">
         {% csrf_token %}
         <input type="hidden" value="{{ room.id }}" name="room_id">
         <input type="hidden" value="{{ member.id }}" name="member_id">
@@ -119,9 +99,9 @@
               </tr>
               {% endfor %}
             </table>
-          </div>
-        </form>
-      {% endif %}
+          {% endif %}
+        </div>
+      </form>
     {% else %}
       <p>Ingen produkter.</p>
     {% endif %}
@@ -129,6 +109,12 @@
   {% endblock %}
   <br />
   {% include "stregsystem/purchase_heatmap.html" %}
+
+  <script>
+    window.addEventListener("pageshow", () => {
+      document.querySelectorAll('#product-buy-form .linkalike').forEach(b => b.disabled = false);
+    });
+  </script>
 </main>
 
 {% endblock %}

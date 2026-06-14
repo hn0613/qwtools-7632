@@ -4,8 +4,7 @@
 
 {% block content %}
 <main class="center">
-    <h3>{{ member.firstname }} {{ member.lastname }} ({{ member.email }}) </h3>
-    <h2><a href="/{{room.id}}/sale/{{member.id}}">Tilbage til produktmenu</a></h2>
+    {% include "stregsystem/_menu_nav.html" with active_nav="rank" %}
     <i>Dit første køb var: {{ member_first_purchase }}</i><br><br>
     <form method="post">
         {% csrf_token %}

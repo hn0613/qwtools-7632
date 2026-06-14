@@ -1,0 +1,34 @@
+{% load stregsystem_extras %}
+
+<h3>{{member.firstname}} {{member.lastname}} ({{member.email}})</h3>
+
+{% spaceless %}
+<h4>Du {% if negative_balance %}
+  skylder <span style="color: red;">{{member.balance|money|cut:"-"}}</span> kroner
+  {% else %}har {{member.balance|money}} kroner til gode!
+  {% endif %}
+</h4>
+{% endspaceless %}
+
+<nav id="sublinks" class="horizontal-table">
+  {% if active_nav == "products" %}
+    <strong>Produkter</strong>
+  {% else %}
+    <a href="/{{room.id}}/sale/{{member.id}}">Produkter</a>
+  {% endif %}
+  {% if active_nav == "info" %}
+    <strong>Bruger Info</strong>
+  {% else %}
+    <a href="/{{room.id}}/user/{{member.id}}">Bruger Info</a>
+  {% endif %}
+  {% if active_nav == "pay" %}
+    <strong>Indsæt penge</strong>
+  {% else %}
+    <a href="/{{room.id}}/user/{{member.id}}/pay">Indsæt penge</a>
+  {% endif %}
+  {% if active_nav == "rank" %}
+    <strong>Rangliste</strong>
+  {% else %}
+    <a href="/{{room.id}}/user/{{member.id}}/rank">Rangliste</a>
+  {% endif %}
+</nav>
