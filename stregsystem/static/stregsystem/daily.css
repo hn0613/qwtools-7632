@@ -1,20 +1,25 @@
+/* ==========================================================================
+   Daily Stats Dashboard — Layout & Styles
+   Grid-based layout replacing legacy float system.
+   ========================================================================== */
+
+/* --- Base resets --- */
+
 br.clear {
 	display: none;
 }
 
 #content {
 	padding-bottom: 0;
+	padding-left: 0;
+	padding-right: 0;
 }
 
 #footer {
 	padding: 0;
 }
 
-.clearfix:after {
-  content: "";
-  display: table;
-  clear: both;
-}
+/* --- Dashboard container --- */
 
 #statscontainer {
 	padding: 10px;
@@ -22,136 +27,108 @@ br.clear {
 	box-shadow: inset 0 8px 6px -6px rgba(0, 0, 0, .2);
 }
 
-.column-container {
-	box-sizing: border-box;
-	width: 100%;
+/* ==========================================================================
+   Section hierarchy labels
+   Lightweight uppercase labels that make information tiers explicit
+   without adding visual noise.
+   ========================================================================== */
+
+.dashboard-section {
+	margin-bottom: 16px;
 }
 
-#container {
-	min-width: 500px;
+.dashboard-section:last-child {
+	margin-bottom: 0;
 }
 
-#content {
-	padding-left: 0;
-	padding-right: 0;
+.section-label {
+	display: block;
+	font-size: 0.7em;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: #8899AA;
+	padding: 0 4px 6px 4px;
+	margin: 0;
 }
 
-[class*='col-'] {
-	padding: 10px;
-	float: left;
-	min-height: 1px; 
-	box-sizing: border-box;
-}
-.row:before, 
-.row:after {
-	content:"";
-	display: table ;
-	clear:both;
+/* ==========================================================================
+   Section: Nøgletal (Key Metrics) — 3 metric cards
+   ========================================================================== */
+
+.section-metrics {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 16px;
 }
 
-.col-1 {
-	width: 16.66%;
-}
-.col-2 {
-	width: 33.33%;
-}
-.col-3 {
-	width: 50%;
-}
-.col-4 {
-	width: 66.664%;
-}
-.col-5 {
-	width: 83.33%;
-}
-.col-6 {
-	width: 100%;
+/* ==========================================================================
+   Section: Trend (Chart) — full width
+   ========================================================================== */
+
+.section-trend {
+	/* Single child, no grid needed */
 }
 
-@media all and (max-width:1450px){
-	.col-1{ width: 33.33%;  }
-	.col-2{ width: 50%;     }
-	.col-3{ width: 100%;  }
-	.col-4{ width: 100%;    }
-	.col-5{ width: 100%;    }
-	.col-6{ width: 100%;    }
+/* ==========================================================================
+   Section: Detaljer (Detail Tables) — 3 panels, 2:1:1 ratio
+   Preserves the original width proportions from col-2 + col-1 + col-1.
+   ========================================================================== */
 
-	.row .col-2:last-of-type{
-		width: 100%; 
+.section-details {
+	display: grid;
+	grid-template-columns: 2fr 1fr 1fr;
+	gap: 16px;
+}
+
+/* ==========================================================================
+   Responsive breakpoints
+   One declaration per breakpoint controls the entire row.
+   ========================================================================== */
+
+/* Medium: metrics wrap to 2+1, details stack to single column */
+@media all and (max-width: 1450px) {
+	.section-metrics {
+		grid-template-columns: repeat(2, 1fr);
 	}
 
-	.row .col-5 ~ .col-1{
-		width: 100%; 
+	.section-details {
+		grid-template-columns: 1fr;
 	}
 }
-@media all and (max-width:850px){
-	.col-1{ width: 50%;     }
-	.col-2{ width: 100%;    }
-	.col-3{ width: 100%;    }
-	.col-4{ width: 100%;    }
-	.col-5{ width: 100%;    }
-	.col-6{ width: 100%;    }
+
+/* Narrow: everything single column */
+@media all and (max-width: 850px) {
+	.section-metrics {
+		grid-template-columns: 1fr;
+	}
+
+	.section-details {
+		grid-template-columns: 1fr;
+	}
+
+	/* Shrink icon container to prevent text overlap at full-width */
+	#topline .panel .icon-container {
+		width: 45px;
+	}
 }
 
-.stat {
-	padding-left: 10px;
-	font-size: 2em;
-}
+/* ==========================================================================
+   Panel (card) base styles
+   ========================================================================== */
 
 .panel {
-	float: left;
-
 	padding: 10px;
 	width: 100%;
+	box-sizing: border-box;
 
 	background-color: #F5F5F5;
-
-	box-sizing: border-box;
 	border-radius: 5px;
 	box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
-
-	overflow: hidden;
-}
-
-.panel table {
-	width: 100%;
-}
-
-#topline .panel {
-	margin: 0;
-	width: 100%;
-	box-sizing: border-box;
-	position:relative;
-}
-#topline .panel .icon{
-	color: #F0F0F0;
-	font-size: 2em;
-	position: absolute;
-	left: 50%;
-	top: 50%;
-	transform: translateY(-50%) translateX(-50%);
-	display: block;
-	color: rgba(255, 255, 255, .8);
-}
-#topline .panel .icon-container{
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	right: 0;
-	width: 70px;
-}
-.icon-color-1 {
-	background-color: #E74C3C;
-}
-.icon-color-2 {
-	background-color: #3498DB;
-}
-.icon-color-3 {
-	background-color: #1ABC9C;
 }
 
 .panel h2:first-child {
-	margin: -10px -10px 10px -10px; /* Go to the sides */
+	margin: -10px -10px 10px -10px;
 }
 
 .panel h2 {
@@ -159,6 +136,21 @@ br.clear {
 	background-color: #6F7E95;
 	padding: 20px;
 	margin-bottom: 10px;
+}
+
+.panel table {
+	width: 100%;
+}
+
+/* ==========================================================================
+   Metric card specifics (#topline)
+   ========================================================================== */
+
+#topline .panel {
+	margin: 0;
+	width: 100%;
+	box-sizing: border-box;
+	position: relative;
 }
 
 #topline .panel h2 {
@@ -172,4 +164,130 @@ br.clear {
 
 	font-size: 1.1em;
 	font-weight: normal;
+}
+
+.stat {
+	padding-left: 10px;
+	font-size: 2em;
+}
+
+/* Icon container (right-side colored block) */
+#topline .panel .icon-container {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: 0;
+	width: 70px;
+}
+
+#topline .panel .icon {
+	color: rgba(255, 255, 255, .8);
+	font-size: 2em;
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translateY(-50%) translateX(-50%);
+	display: block;
+}
+
+.icon-color-1 {
+	background-color: #E74C3C;
+}
+.icon-color-2 {
+	background-color: #3498DB;
+}
+.icon-color-3 {
+	background-color: #1ABC9C;
+}
+
+/* ==========================================================================
+   Table overflow handling
+   Wraps tables in a scrollable container so wide content (product names,
+   full names) shows a scrollbar instead of being silently clipped.
+   ========================================================================== */
+
+.table-scroll {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+.table-scroll table {
+	min-width: 100%;
+}
+
+/* ==========================================================================
+   Chart loading & error states
+   The loading placeholder is visible by default (no JS needed to show it).
+   JS transitions away from it on success or to error on failure.
+   ========================================================================== */
+
+/* --- Loading state (visible by default) --- */
+
+.chart-loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	min-height: 200px;
+	color: #6F7E95;
+	font-size: 0.95em;
+}
+
+.chart-loading .fa-spinner {
+	font-size: 1.4em;
+}
+
+/* When chart loads successfully: hide placeholder, show chart */
+.chart-loaded .chart-loading {
+	display: none;
+}
+
+/* --- Error state (hidden by default) --- */
+
+.chart-error {
+	display: none;
+	padding: 20px;
+	margin-top: 8px;
+	border: 2px solid #E74C3C;
+	border-radius: 4px;
+	background-color: #FFF5F5;
+	color: #333;
+}
+
+.chart-error .fa-exclamation-triangle {
+	color: #E74C3C;
+	margin-right: 8px;
+	font-size: 1.2em;
+}
+
+.chart-error > span {
+	display: block;
+}
+
+.chart-error > span:first-of-type {
+	font-weight: 600;
+	margin-bottom: 6px;
+}
+
+.chart-error-detail {
+	font-size: 0.85em;
+	color: #666;
+}
+
+/* When chart fails: hide chart, show error */
+.chart-failed .chart-loading {
+	display: none;
+}
+
+.chart-failed .chart-error {
+	display: block;
+}
+
+.chart-failed #sales_chart {
+	display: none;
+}
+
+/* Ensure chart container has reasonable height when rendered */
+#sales_chart {
+	min-height: 200px;
 }
