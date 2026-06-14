@@ -260,7 +260,7 @@ def usermenu(request, room, member, bought, from_sale=False):
     if member.has_stregforbud():
         return render(request, 'stregsystem/error_stregforbud.html', locals())
     else:
-        return render(request, 'stregsystem/menu.html', {**locals(), **heatmap_context})
+        return render(request, 'stregsystem/menu.html', {**locals(), **heatmap_context, 'active_subpage': 'menu'})
 
 
 def menu_userinfo(request, room_id, member_id):
@@ -291,7 +291,7 @@ def menu_userinfo(request, room_id, member_id):
     negative_balance = member.balance < 0
     stregforbud = member.has_stregforbud()
 
-    return render(request, 'stregsystem/menu_userinfo.html', locals())
+    return render(request, 'stregsystem/menu_userinfo.html', {**locals(), 'active_subpage': 'info'})
 
 
 def send_userdata(request, room_id, member_id):
@@ -339,7 +339,7 @@ def menu_userpay(request, room_id, member_id):
 
     amounts = sorted(amounts)
 
-    return render(request, 'stregsystem/menu_userpay.html', locals())
+    return render(request, 'stregsystem/menu_userpay.html', {**locals(), 'active_subpage': 'pay'})
 
 
 def menu_userrank(request, room_id, member_id):
@@ -423,7 +423,7 @@ def menu_userrank(request, room_id, member_id):
         }.items()
     }
 
-    return render(request, 'stregsystem/menu_userrank.html', locals())
+    return render(request, 'stregsystem/menu_userrank.html', {**locals(), 'active_subpage': 'rank'})
 
 
 def menu_sale(request, room_id, member_id, product_id=None):

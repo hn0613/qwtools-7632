@@ -1,0 +1,8 @@
+<nav id="sublinks" class="horizontal-table">
+    <a href="/{{room.id}}/user/{{member.id}}" class="sublink"
+       {% if active_subpage == 'info' %}aria-current="page"{% endif %}>Bruger Info</a>
+    <a href="/{{room.id}}/user/{{member.id}}/pay" class="sublink"
+       {% if active_subpage == 'pay' %}aria-current="page"{% endif %}>Inds&#230;t penge</a>
+    <a href="/{{room.id}}/user/{{member.id}}/rank" class="sublink"
+       {% if active_subpage == 'rank' %}aria-current="page"{% endif %}>Rangliste</a>
+</nav>

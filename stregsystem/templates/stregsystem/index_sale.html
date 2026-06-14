@@ -8,46 +8,47 @@
 {% endblock %}
 
 {% block message %}
-<blink>
-<b>
-{% autoescape off %}
-<span class="username">{{member.username}}</span> har lige købt
-{% for product in products %}{% if forloop.last and not forloop.first %}
- og
-{% else %}{% if not forloop.first %},
-{% endif %}{% endif %}
-{{ product.1 }} {{ product.0 }}{% endfor %}
-for tilsammen {{cost|money}} kr.
-</b>
-{% if member_has_low_balance %}
-<div class="blink">
-    <h2>
+<div class="purchase-confirmation" role="status" aria-live="polite">
+  <button class="purchase-confirmation__dismiss" aria-label="Luk" onclick="this.parentElement.remove()">&#xd7;</button>
+  {% autoescape off %}
+  <b>
+  <span class="username">{{member.username}}</span> har k&#xf8;bt
+  {% for product in products %}{% if forloop.last and not forloop.first %}
+   og
+  {% else %}{% if not forloop.first %},
+  {% endif %}{% endif %}
+  {{ product.1 }} {{ product.0 }}{% endfor %}
+  for {{cost|money}} kr.
+  </b>
+  {% if member_has_low_balance %}
+    <div class="purchase-confirmation--warning" style="margin-top: 8px; padding: 4px 8px;">
         Balance: <span class="remainingbalance">{{member_balance}}</span> kr.
-    </h2>
+    </div>
+  {% endif %}
+  {% if give_multibuy_hint %}
+    <div style="margin-top: 8px;">
+      <em>Pssst &#x2014; multibuy: {{sale_hints}}</em>
+    </div>
+  {% endif %}
+  {% endautoescape %}
 </div>
-{% endif %}
-{% if give_multibuy_hint %}
-    <h1>psssst. multibuy er enabled.</h1>
-    <b> Du kunne have skrevet: {{sale_hints}} </b>
-{% endif %}
-</blink>
 {% if promille %}
+  <p style="text-align: center;">
     {% if is_ballmer_peaking %}
-        <br />Du Ballmer-peaker!! Du kan producere god kode de næste: {{ bp_minutes|floatformat:0 }} minuter og {{ bp_seconds|floatformat:0 }} sekunder!
+      Du Ballmer-peaker!! God kode i: {{ bp_minutes|floatformat:0 }}m {{ bp_seconds|floatformat:0 }}s!
     {% else %}
-        <br />Din alkohol promille er ca. <b>{{promille|floatformat:2}}‰</b>
+      Din promille er ca. <b>{{promille|floatformat:2}}&#x2030;</b>
     {% endif %}
+  </p>
 {% endif %}
 {% if product_contains_caffeine %}
-    {%  if is_coffee_master%}
-        <br />🏆Du er kaffemester i denne uge!🏆
+  <p style="text-align: center;">
+    {% if is_coffee_master %}&#x1F3C6; Du er kaffemester i denne uge! &#x1F3C6;<br />{% endif %}
+    Koffein: {{caffeine | floatformat:0}}mg
+    {% if cups is not 0 %}
+      ({{caffeine | caffeine_emoji_render}})
     {% endif %}
-    <br />Du har {{caffeine | floatformat:0}}mg koffein i kroppen.
-    {%  if cups is not 0 %}
-        <br />Det svarer til at drikke {{caffeine | caffeine_emoji_render}} {{ cups|pluralize:'kop kaffe,kopper kaffe i streg!' }}
-    {% endif %}
+  </p>
 {% endif %}
-{% endautoescape %}
-<br />
 <br />
 {% endblock %}

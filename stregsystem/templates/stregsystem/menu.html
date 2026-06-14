@@ -31,19 +31,7 @@
     {% endif %}
   </h4>
 
-  <nav id="sublinks" class="horizontal-table">
-      <a href="/{{room.id}}/user/{{member.id}}">Bruger Info</a>
-      <a href="/{{room.id}}/user/{{member.id}}/pay">Indsæt penge</a>
-      <a href="/{{room.id}}/user/{{member.id}}/rank">Rangliste</a>
-    {% comment %}
-      <a href="/{{room.id}}/user/{{member.id}}/undo">Fortryd køb</a>
-    {% endcomment %}
-
-    {% comment %}
-      <a href="/index.php3?multiple=1&user_id=2024">Multi-køb</a>
-    {% endcomment %}
-
-  </nav>
+  {% include "stregsystem/_subnav.html" %}
   <br />
 
   <span>Køb et produkt ved at trykke på et produktnavn i tabellerne nedenfor.</span>
@@ -53,22 +41,31 @@
   <div id="message">
   {% block message %}
     {% if bought %}
-      <blink><b>Du har lige købt en {{bought.name}} til {{bought.price|money}} kr.</b></blink>
-    {% endif %}
-    {% if promille %}
-      {% if is_ballmer_peaking %}
-        <br />Du Ballmer-peaker!! Du kan producere god kode de næste: {{ bp_minutes|floatformat:0 }} minuter og {{ bp_seconds|floatformat:0 }} sekunder!
-      {% else %}
-        <br />Din alkohol promille er ca. <b>{{promille|floatformat:2}}‰</b>
-      {% endif %}
-    {% endif %}
-    {% if caffeine %}
-      <br />Du har {{caffeine | floatformat:0}}mg koffein i kroppen.
-      {% if cups is not 0 %}
-        <br />Det svarer til at drikke {{caffeine | caffeine_emoji_render}} {{ cups|pluralize:'kop kaffe,kopper kaffe i streg!' }}
-      {% endif %}
-      {% if is_coffee_master %}
-        <br />🏆Du er kaffemester i denne uge!🏆
+      <div class="purchase-confirmation" role="status" aria-live="polite">
+        <button class="purchase-confirmation__dismiss" aria-label="Luk" onclick="this.parentElement.remove()">&#xd7;</button>
+        <b>Du har k&#xf8;bt en {{bought.name}} til {{bought.price|money}} kr.</b>
+        {% if promille %}
+          {% if is_ballmer_peaking %}
+            <br />Du Ballmer-peaker!! God kode i: {{ bp_minutes|floatformat:0 }}m {{ bp_seconds|floatformat:0 }}s!
+          {% else %}
+            <br />Promille: <b>{{promille|floatformat:2}}&#x2030;</b>
+          {% endif %}
+        {% endif %}
+        {% if caffeine %}
+          <br />Koffein: {{caffeine | floatformat:0}}mg
+          {% if cups is not 0 %}
+            ({{caffeine | caffeine_emoji_render}})
+          {% endif %}
+          {% if is_coffee_master %} &#x1F3C6;{% endif %}
+        {% endif %}
+      </div>
+    {% else %}
+      {% if promille %}
+        {% if is_ballmer_peaking %}
+          <div class="purchase-confirmation purchase-confirmation--warning">
+            Du Ballmer-peaker!! God kode i: {{ bp_minutes|floatformat:0 }}m {{ bp_seconds|floatformat:0 }}s!
+          </div>
+        {% endif %}
       {% endif %}
     {% endif %}
 
@@ -129,6 +126,67 @@
   {% endblock %}
   <br />
   {% include "stregsystem/purchase_heatmap.html" %}
+
+  <script>
+  (function() {
+    // Double-submit protection
+    const form = document.getElementById('product-buy-form');
+    if (form) {
+      let submitting = false;
+
+      form.addEventListener('submit', function(e) {
+        if (submitting) {
+          e.preventDefault();
+          return;
+        }
+        submitting = true;
+
+        form.querySelectorAll("button[name='product_id']").forEach(function(btn) {
+          btn.disabled = true;
+          btn.style.opacity = '0.6';
+        });
+
+        // Save scroll position before navigation
+        try {
+          sessionStorage.setItem('stregsystem_scroll_y', window.scrollY.toString());
+        } catch(e) {}
+
+        // Safety timeout: re-enable after 10 seconds if navigation fails
+        setTimeout(function() {
+          if (submitting) {
+            form.querySelectorAll("button[name='product_id']").forEach(function(btn) {
+              btn.disabled = false;
+              btn.style.opacity = '';
+            });
+            submitting = false;
+          }
+        }, 10000);
+      });
+
+      // BFCache: re-enable buttons and restore scroll when page is restored
+      window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+          form.querySelectorAll("button[name='product_id']").forEach(function(btn) {
+            btn.disabled = false;
+            btn.style.opacity = '';
+          });
+          submitting = false;
+        }
+      });
+    }
+
+    // Scroll position restoration
+    try {
+      var savedScroll = sessionStorage.getItem('stregsystem_scroll_y');
+      if (savedScroll !== null) {
+        sessionStorage.removeItem('stregsystem_scroll_y');
+        requestAnimationFrame(function() {
+          window.scrollTo(0, parseInt(savedScroll, 10));
+        });
+      }
+    } catch(e) {}
+  })();
+  </script>
 </main>
 
 {% endblock %}

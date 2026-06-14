@@ -10,7 +10,9 @@
 <main class="center">
   <h3>{{member.firstname}} {{member.lastname}} ({{member.email}})</h3>
 
-  <h2><a href="/{{room.id}}/sale/{{member.id}}">Tilbage til produktmenu</a></h2>
+  <a href="/{{room.id}}/sale/{{member.id}}" class="back-link">Tilbage til produktmenu</a>
+
+  {% include "stregsystem/_subnav.html" %}
 
   {% spaceless %}
   <h4>Du {% if negative_balance %}

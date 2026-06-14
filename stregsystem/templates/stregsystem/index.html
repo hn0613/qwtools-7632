@@ -122,7 +122,9 @@
 
   <script>
     window.addEventListener("pageshow", (event) => {
-      document.getElementById('buybutton').disabled = false;
+      if (event.persisted) {
+        document.getElementById('buybutton').disabled = false;
+      }
     });
   </script>
 </main>
