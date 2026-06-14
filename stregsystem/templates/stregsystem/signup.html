@@ -2,38 +2,60 @@
 
 {% load stregsystem_extras %}
 
-{% block title %}F-Klub Tilmelding{% endblock %}
+{% block title %}F-Klub Tilmelding — Trin 1{% endblock %}
+
+{% block heading %}Tilmelding{% endblock %}
 
 {% block content %}
-    <!-- TODO move style block -->
-    <style>
-        #signup_form {
-            width: 400px;
-            margin: 0 auto;
-        }
+{% include "stregsystem/_signup_steps.html" with current_step=1 %}
 
-        #signup_form table {
-            width: 100%;
-        }
+<div class="signup-flow">
+    <h2>Opret din konto</h2>
+    <p class="flow-description">
+        Udfyld felterne herunder for at oprette dig som medlem af F-klubben.
+        Når formularen er sendt, bliver du guidet videre til betaling.
+    </p>
 
-        #signup_form table th {
-            text-align: left;
-        }
+    {% if form_errors %}
+    <div class="signup-error-summary" role="alert">
+        <p class="error-summary-title">
+            {% if form_errors|length == 1 %}
+                Der er 1 fejl, der skal rettes:
+            {% else %}
+                Der er {{ form_errors|length }} fejl, der skal rettes:
+            {% endif %}
+        </p>
+        <ul>
+            {% for err in form_errors %}
+            <li><a href="#field-{{ err.field }}">{{ err.message }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
 
-        #signup_form table td {
-            text-align: right;
-        }
-    </style>
-
-    <form method="post" id="signup_form">
+    <form method="post" class="signup-form" novalidate>
         {% csrf_token %}
-        <table>
-            <tbody>
-            {{ form.as_table }}
-            </tbody>
-        </table>
 
-        <input type="submit" value="Tilmeld"/>
-        <p>* Biologisk køn bliver kun brugt til at beregne koffein- og promilletal.</p>
+        {% for field in form %}
+        <div class="field-group{% if field.errors %} has-error{% endif %}" id="field-{{ field.html_name }}">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+            <span class="field-hint">{{ field.help_text }}</span>
+            {% endif %}
+            {% for error in field.errors %}
+            <span class="field-error" role="alert">{{ error }}</span>
+            {% endfor %}
+        </div>
+        {% endfor %}
+
+        <div class="flow-actions">
+            <input type="submit" value="Opret konto og gå til betaling"/>
+        </div>
+
+        <p class="flow-footnote">
+            * Biologisk køn bliver kun brugt til at beregne koffein- og promilletal.
+        </p>
     </form>
+</div>
 {% endblock %}

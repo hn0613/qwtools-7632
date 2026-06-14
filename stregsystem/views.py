@@ -636,16 +636,35 @@ def signup(request):
     is_post = request.method == "POST"
     form = SignupForm(request.POST) if is_post else SignupForm()
 
+    # Collect structured errors for grouped display
+    form_errors = []
+
     if is_post and form.is_valid():
         if Member.objects.filter(username=form.cleaned_data.get('username')).all().count() > 0:
             form.add_error("username", "Brugernavn allerede i brug")
-            return render(request, "stregsystem/signup.html", locals())
+            for field in form.errors:
+                for msg in form.errors[field]:
+                    form_errors.append({'field': field, 'message': msg})
+            return render(request, "stregsystem/signup.html", {
+                'form': form,
+                'current_step': 1,
+                'form_errors': form_errors,
+            })
 
         pending_signup = perform_signup(form)
 
         return redirect('signup_status', signup_id=pending_signup.id)
 
-    return render(request, "stregsystem/signup.html", locals())
+    if is_post and not form.is_valid():
+        for field in form.errors:
+            for msg in form.errors[field]:
+                form_errors.append({'field': field, 'message': msg})
+
+    return render(request, "stregsystem/signup.html", {
+        'form': form,
+        'current_step': 1,
+        'form_errors': form_errors,
+    })
 
 
 def signup_status(request, signup_id):
@@ -655,6 +674,7 @@ def signup_status(request, signup_id):
         return redirect('signup')
 
     mobilepay_url = pending_signup.generate_mobilepay_url()
+    member = pending_signup.member
 
     qr = io.BytesIO()
     qrcode.make(mobilepay_url, image_factory=qrcode.image.svg.SvgPathFillImage).save(qr)
@@ -662,7 +682,13 @@ def signup_status(request, signup_id):
     mobilepay_qr_svg = qr.getvalue().decode('utf-8').splitlines()[1]
     qr.close()
 
-    return render(request, "stregsystem/signup_status.html", locals())
+    return render(request, "stregsystem/signup_status.html", {
+        'pending_signup': pending_signup,
+        'mobilepay_url': mobilepay_url,
+        'mobilepay_qr_svg': mobilepay_qr_svg,
+        'member': member,
+        'current_step': 2,
+    })
 
 
 def get_active_items(request):

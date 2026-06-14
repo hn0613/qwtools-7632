@@ -238,3 +238,368 @@ footer {
   background-color: red;
 }
 
+/* ========================================
+   Signup Flow — shared styles
+   ======================================== */
+
+/* --- Step indicator --- */
+.signup-steps {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  margin: 1.5em auto 2em;
+  max-width: 420px;
+  padding: 0 1em;
+}
+
+.signup-steps .step {
+  flex: 1;
+  text-align: center;
+  position: relative;
+  font-size: 0.85em;
+  color: #999;
+}
+
+.signup-steps .step::before {
+  content: attr(data-step);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2em;
+  height: 2em;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  margin: 0 auto 0.4em;
+  font-weight: bold;
+  font-size: 1em;
+  background: #fff;
+  position: relative;
+  z-index: 1;
+}
+
+.signup-steps .step::after {
+  content: "";
+  position: absolute;
+  top: 1em;
+  left: calc(50% + 1.2em);
+  right: calc(-50% + 1.2em);
+  height: 2px;
+  background: #ccc;
+}
+
+.signup-steps .step:last-child::after {
+  display: none;
+}
+
+.signup-steps .step.active {
+  color: #333;
+  font-weight: 600;
+}
+
+.signup-steps .step.active::before {
+  border-color: #c00;
+  background: #c00;
+  color: #fff;
+}
+
+.signup-steps .step.done::before {
+  border-color: #2a7;
+  background: #2a7;
+  color: #fff;
+}
+
+.signup-steps .step.done::after {
+  background: #2a7;
+}
+
+.signup-steps .step.done {
+  color: #2a7;
+}
+
+/* --- Flow container --- */
+.signup-flow {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 1em 2em;
+}
+
+.signup-flow h2 {
+  font-size: 1.3em;
+  margin: 0 0 0.3em;
+  color: #222;
+}
+
+.signup-flow .flow-description {
+  color: #555;
+  font-size: 0.95em;
+  margin: 0 0 1.5em;
+  line-height: 1.5;
+}
+
+/* --- Form fields --- */
+.signup-form .field-group {
+  margin-bottom: 1.2em;
+}
+
+.signup-form .field-group label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9em;
+  margin-bottom: 0.3em;
+  color: #333;
+}
+
+.signup-form .field-group input,
+.signup-form .field-group select {
+  width: 100%;
+  padding: 0.55em 0.7em;
+  font-size: 1em;
+  border: 1.5px solid #bbb;
+  border-radius: 4px;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.signup-form .field-group input:focus,
+.signup-form .field-group select:focus {
+  outline: none;
+  border-color: #c00;
+  box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.12);
+}
+
+.signup-form .field-group .field-hint {
+  font-size: 0.82em;
+  color: #777;
+  margin-top: 0.25em;
+}
+
+/* --- Field errors (inline) --- */
+.signup-form .field-group.has-error input,
+.signup-form .field-group.has-error select {
+  border-color: #d32f2f;
+  background: #fff5f5;
+}
+
+.signup-form .field-error {
+  color: #d32f2f;
+  font-size: 0.84em;
+  margin-top: 0.25em;
+  display: block;
+}
+
+/* --- Error summary banner --- */
+.signup-error-summary {
+  background: #fff0f0;
+  border: 1.5px solid #e57373;
+  border-radius: 6px;
+  padding: 1em 1.2em;
+  margin-bottom: 1.5em;
+}
+
+.signup-error-summary .error-summary-title {
+  font-weight: 700;
+  font-size: 0.95em;
+  color: #c62828;
+  margin: 0 0 0.5em;
+}
+
+.signup-error-summary ul {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.signup-error-summary li {
+  font-size: 0.88em;
+  color: #b71c1c;
+  margin-bottom: 0.25em;
+  line-height: 1.4;
+}
+
+.signup-error-summary a {
+  color: #c62828;
+  font-weight: 600;
+}
+
+/* --- Submit / action buttons --- */
+.signup-flow .flow-actions {
+  margin-top: 1.5em;
+  display: flex;
+  gap: 0.8em;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.signup-flow .flow-actions input[type="submit"],
+.signup-flow .flow-actions .btn-primary {
+  background: #c00;
+  color: #fff;
+  border: none;
+  padding: 0.65em 2em;
+  font-size: 1em;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.signup-flow .flow-actions input[type="submit"]:hover,
+.signup-flow .flow-actions .btn-primary:hover {
+  background: #a00;
+}
+
+.signup-flow .flow-actions .btn-secondary {
+  background: none;
+  border: 1.5px solid #999;
+  padding: 0.55em 1.5em;
+  font-size: 0.95em;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #555;
+  text-decoration: none;
+}
+
+.signup-flow .flow-actions .btn-secondary:hover {
+  border-color: #555;
+  color: #222;
+}
+
+/* --- Footnote --- */
+.signup-flow .flow-footnote {
+  font-size: 0.82em;
+  color: #888;
+  margin-top: 1.5em;
+  line-height: 1.5;
+}
+
+/* --- Payment page (step 2) --- */
+.signup-payment {
+  text-align: center;
+}
+
+.signup-payment .qr-wrapper {
+  margin: 1.5em 0;
+}
+
+.signup-payment .qr-wrapper svg,
+.signup-payment .qr-wrapper img {
+  max-width: 240px;
+  height: auto;
+}
+
+.signup-payment .payment-amount {
+  font-size: 1.4em;
+  font-weight: 700;
+  color: #222;
+  margin: 0.5em 0;
+}
+
+.signup-payment .payment-username {
+  font-size: 0.95em;
+  color: #555;
+  margin-bottom: 1em;
+}
+
+.signup-payment .payment-instructions {
+  font-size: 0.92em;
+  color: #555;
+  line-height: 1.6;
+  max-width: 380px;
+  margin: 0 auto 1.5em;
+}
+
+.signup-payment .payment-status-note {
+  font-size: 0.85em;
+  color: #888;
+  margin-top: 1em;
+  line-height: 1.5;
+}
+
+/* --- Error pages within flow context --- */
+.signup-flow-error {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 1em 2em;
+  text-align: center;
+}
+
+.signup-flow-error .error-icon {
+  font-size: 2.5em;
+  margin-bottom: 0.3em;
+}
+
+.signup-flow-error h2 {
+  color: #c62828;
+  font-size: 1.2em;
+  margin: 0 0 0.5em;
+}
+
+.signup-flow-error .error-explanation {
+  font-size: 0.95em;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 1.5em;
+}
+
+.signup-flow-error .error-next-step {
+  font-size: 0.9em;
+  color: #333;
+  background: #f5f5f5;
+  border-radius: 6px;
+  padding: 1em;
+  margin-bottom: 1.5em;
+  line-height: 1.5;
+}
+
+.signup-flow-error .error-next-step strong {
+  display: block;
+  margin-bottom: 0.3em;
+}
+
+/* --- Mobile responsive --- */
+@media (max-width: 520px) {
+  .signup-flow {
+    padding: 0 0.8em 2em;
+  }
+
+  .signup-steps {
+    max-width: 100%;
+  }
+
+  .signup-steps .step {
+    font-size: 0.78em;
+  }
+
+  .signup-form .field-group input,
+  .signup-form .field-group select {
+    font-size: 16px; /* prevent iOS zoom */
+  }
+
+  .signup-flow .flow-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .signup-flow .flow-actions input[type="submit"],
+  .signup-flow .flow-actions .btn-primary,
+  .signup-flow .flow-actions .btn-secondary {
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .signup-payment .qr-wrapper svg,
+  .signup-payment .qr-wrapper img {
+    max-width: 200px;
+  }
+
+  header {
+    grid-template-columns: auto 1fr auto;
+    padding: 3px 2vw;
+    column-gap: 2vw;
+    font-size: 0.85em;
+  }
+
+  header h1 {
+    font-size: 1em;
+  }
+}
+

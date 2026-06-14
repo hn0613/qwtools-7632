@@ -1,14 +1,33 @@
-{% extends "stregsystem/error.html" %}
+{% extends "stregsystem/base.html" %}
 
 {% load stregsystem_extras %}
 
+{% block title %}F-Klub Tilmelding — Venter på godkendelse{% endblock %}
 
-{% block headline %}
-Bruger "{{username|escape}}" ikke færdig oprettet
-{% endblock %}
+{% block heading %}Tilmelding{% endblock %}
 
-{% block message %}
-Det ser ud til at kontoen, <b>{{username|escape}}</b> stadig mangler at blive godkendt af TREOens personale.<br />
-<br />
-Hvis du mener dette er en fejl kan du sende en e-mail til TREOEN på <a href="mailto:treo@fklub.dk">treo@fklub.dk</a>
+{% block content %}
+{% include "stregsystem/_signup_steps.html" with current_step=2 %}
+
+<div class="signup-flow">
+    <div class="signup-flow-error">
+        <div class="error-icon" aria-hidden="true">&#9203;</div>
+        <h2>Kontoen "{{ username|escape }}" venter på godkendelse</h2>
+        <p class="error-explanation">
+            Din betaling er registreret, men din konto mangler stadig at blive godkendt
+            af F-klubbens personale. Det sker normalt inden for kort tid.
+        </p>
+
+        <div class="error-next-step">
+            <strong>Sådan kommer du videre:</strong>
+            Vent på godkendelsen — du får en e-mail, når din konto er klar.
+            Hvis der går mere end et par dage, er du velkommen til at kontakte os.
+        </div>
+
+        <div class="flow-actions" style="justify-content: center;">
+            <a href="/" class="btn-secondary">Tilbage til forsiden</a>
+            <a href="mailto:treo@fklub.dk" class="btn-secondary">Kontakt support</a>
+        </div>
+    </div>
+</div>
 {% endblock %}
