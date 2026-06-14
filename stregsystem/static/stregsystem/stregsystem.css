@@ -238,3 +238,136 @@ footer {
   background-color: red;
 }
 
+/* === Signup Flow === */
+
+.signup-flow {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1em;
+}
+
+.signup-steps {
+  display: flex;
+  justify-content: space-between;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5em 0;
+  counter-reset: step;
+  font-size: 0.9em;
+
+  & li {
+    counter-increment: step;
+    color: #999;
+    text-align: center;
+    flex: 1;
+    position: relative;
+    padding-bottom: 0.5em;
+
+    &::before {
+      content: counter(step) ". ";
+    }
+  }
+
+  & li.current {
+    color: #000;
+    font-weight: bold;
+    border-bottom: 2px solid #000;
+  }
+
+  & li.done {
+    color: #666;
+
+    &::after {
+      content: " \2713";
+    }
+  }
+}
+
+.signup-field {
+  margin-bottom: 1em;
+
+  & label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 0.25em;
+  }
+
+  & input,
+  & select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.3em;
+    font-size: inherit;
+  }
+
+  &.has-error {
+    border-left: 3px solid #c00;
+    padding-left: 0.5em;
+  }
+}
+
+.field-error {
+  display: block;
+  color: #c00;
+  font-size: 0.9em;
+  margin-top: 0.25em;
+}
+
+.form-errors {
+  border-left: 3px solid #c00;
+  padding: 0.5em 1em;
+  margin-bottom: 1em;
+  background: #fff5f5;
+
+  & p {
+    margin: 0.25em 0;
+  }
+}
+
+.signup-flow .status-card {
+  text-align: center;
+  padding: 0.5em 0;
+
+  & h2 {
+    margin-top: 0;
+  }
+
+  & svg {
+    max-width: 250px;
+    width: 100%;
+    height: auto;
+  }
+}
+
+.signup-flow .info-box {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 1em;
+  margin: 1em 0;
+  background: #f9f9f9;
+  text-align: left;
+
+  & p {
+    margin: 0.4em 0;
+  }
+
+  & h3 {
+    margin: 0 0 0.4em 0;
+  }
+}
+
+.signup-flow .hint {
+  color: #666;
+  font-size: 0.85em;
+}
+
+@media (max-width: 520px) {
+  .signup-flow {
+    padding: 0.75em;
+  }
+
+  .signup-steps {
+    font-size: 0.8em;
+  }
+}
+

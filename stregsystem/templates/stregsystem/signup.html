@@ -5,35 +5,62 @@
 {% block title %}F-Klub Tilmelding{% endblock %}
 
 {% block content %}
-    <!-- TODO move style block -->
-    <style>
-        #signup_form {
-            width: 400px;
-            margin: 0 auto;
-        }
+<main class="signup-flow">
+    <ol class="signup-steps">
+        <li class="current">Opret konto</li>
+        <li>Betal gebyr</li>
+        <li>Godkendelse</li>
+    </ol>
 
-        #signup_form table {
-            width: 100%;
-        }
-
-        #signup_form table th {
-            text-align: left;
-        }
-
-        #signup_form table td {
-            text-align: right;
-        }
-    </style>
+    {% if form.non_field_errors %}
+    <div class="form-errors">
+        {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
 
     <form method="post" id="signup_form">
         {% csrf_token %}
-        <table>
-            <tbody>
-            {{ form.as_table }}
-            </tbody>
-        </table>
+
+        <div class="signup-field {% if form.username.errors %}has-error{% endif %}">
+            <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+            {{ form.username }}
+            {% for error in form.username.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+        </div>
+
+        <div class="signup-field {% if form.firstname.errors %}has-error{% endif %}">
+            <label for="{{ form.firstname.id_for_label }}">{{ form.firstname.label }}</label>
+            {{ form.firstname }}
+            {% for error in form.firstname.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+        </div>
+
+        <div class="signup-field {% if form.lastname.errors %}has-error{% endif %}">
+            <label for="{{ form.lastname.id_for_label }}">{{ form.lastname.label }}</label>
+            {{ form.lastname }}
+            {% for error in form.lastname.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+        </div>
+
+        <div class="signup-field {% if form.email.errors %}has-error{% endif %}">
+            <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+            {{ form.email }}
+            {% for error in form.email.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+        </div>
+
+        <div class="signup-field {% if form.notes.errors %}has-error{% endif %}">
+            <label for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+            {{ form.notes }}
+            {% for error in form.notes.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+        </div>
+
+        <div class="signup-field {% if form.gender.errors %}has-error{% endif %}">
+            <label for="{{ form.gender.id_for_label }}">{{ form.gender.label }}</label>
+            {{ form.gender }}
+            {% for error in form.gender.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+            <p class="hint">* Biologisk k&oslash;n bliver kun brugt til at beregne koffein- og promilletal.</p>
+        </div>
 
         <input type="submit" value="Tilmeld"/>
-        <p>* Biologisk køn bliver kun brugt til at beregne koffein- og promilletal.</p>
     </form>
+</main>
 {% endblock %}

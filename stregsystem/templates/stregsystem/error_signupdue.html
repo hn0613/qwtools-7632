@@ -1,14 +1,36 @@
-{% extends "stregsystem/error.html" %}
+{% extends "stregsystem/base.html" %}
 
 {% load stregsystem_extras %}
 
+{% block title %}F-Klub Tilmelding - Afventer betaling{% endblock %}
 
-{% block headline %}
-Bruger "{{username|escape}}" ikke færdig oprettet
-{% endblock %}
+{% block content %}
+<main class="signup-flow">
+    <ol class="signup-steps">
+        <li class="done">Opret konto</li>
+        <li class="current">Betal gebyr</li>
+        <li>Godkendelse</li>
+    </ol>
 
-{% block message %}
-Det ser ud til at kontoen, <b>{{username|escape}}</b> stadig mangler at betale oprettelses gebyret.<br />
-<br />
-Hvis du mener dette er en fejl kan du sende en e-mail til TREOEN på <a href="mailto:treo@fklub.dk">treo@fklub.dk</a>
+    <div class="status-card">
+        <h2>Afventer betaling</h2>
+
+        <div class="info-box">
+            <p>Kontoen <strong>{{ member.username }}</strong> mangler stadig at betale oprettelsesgebyret.</p>
+            {% if pending_signup %}
+            <p>Udest&aring;ende bel&oslash;b: <strong>{{ pending_signup.due|money }} kr.</strong></p>
+            {% endif %}
+        </div>
+
+        {% if mobilepay_qr_svg %}
+        <p>Scan QR-koden med MobilePay for at betale:</p>
+        <a href="{{ mobilepay_url }}">{{ mobilepay_qr_svg|safe }}</a>
+        {% endif %}
+
+        <div class="info-box">
+            <p>Har du allerede betalt? Det kan tage lidt tid f&oslash;r betalingen registreres.</p>
+            <p>Kontakt <a href="mailto:treo@fklub.dk">treo@fklub.dk</a> hvis du mener dette er en fejl.</p>
+        </div>
+    </div>
+</main>
 {% endblock %}

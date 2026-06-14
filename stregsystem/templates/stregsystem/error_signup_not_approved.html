@@ -1,14 +1,28 @@
-{% extends "stregsystem/error.html" %}
+{% extends "stregsystem/base.html" %}
 
 {% load stregsystem_extras %}
 
+{% block title %}F-Klub Tilmelding - Afventer godkendelse{% endblock %}
 
-{% block headline %}
-Bruger "{{username|escape}}" ikke færdig oprettet
-{% endblock %}
+{% block content %}
+<main class="signup-flow">
+    <ol class="signup-steps">
+        <li class="done">Opret konto</li>
+        <li class="done">Betal gebyr</li>
+        <li class="current">Godkendelse</li>
+    </ol>
 
-{% block message %}
-Det ser ud til at kontoen, <b>{{username|escape}}</b> stadig mangler at blive godkendt af TREOens personale.<br />
-<br />
-Hvis du mener dette er en fejl kan du sende en e-mail til TREOEN på <a href="mailto:treo@fklub.dk">treo@fklub.dk</a>
+    <div class="status-card">
+        <h2>Afventer godkendelse</h2>
+
+        <div class="info-box">
+            <p>Tak for din betaling! Kontoen <strong>{{ member.username }}</strong> afventer nu godkendelse af personalet.</p>
+            <p>Du f&aring;r en velkomst-email n&aring;r din konto er klar til brug.</p>
+        </div>
+
+        <div class="info-box">
+            <p>Kontakt <a href="mailto:treo@fklub.dk">treo@fklub.dk</a> hvis du mener dette er en fejl.</p>
+        </div>
+    </div>
+</main>
 {% endblock %}

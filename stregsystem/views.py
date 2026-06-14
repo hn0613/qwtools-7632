@@ -152,10 +152,10 @@ def sale(request, room_id):
         return render(request, 'stregsystem/error_usernotfound.html', locals())
 
     if not member.signup_due_paid:
-        return render(request, 'stregsystem/error_signupdue.html', locals())
+        return render(request, 'stregsystem/error_signupdue.html', {**locals(), **_signup_flow_context(member)})
 
     if not member.signup_approved():
-        return render(request, 'stregsystem/error_signup_not_approved.html', locals())
+        return render(request, 'stregsystem/error_signup_not_approved.html', {**locals(), **_signup_flow_context(member)})
 
     if len(bought_ids):
         return quicksale(request, room, member, bought_ids)
@@ -269,10 +269,10 @@ def menu_userinfo(request, room_id, member_id):
     member = Member.objects.get(pk=member_id, active=True)
 
     if not member.signup_due_paid:
-        return render(request, 'stregsystem/error_signupdue.html', locals())
+        return render(request, 'stregsystem/error_signupdue.html', {**locals(), **_signup_flow_context(member)})
 
     if not member.signup_approved():
-        return render(request, 'stregsystem/error_signup_not_approved.html', locals())
+        return render(request, 'stregsystem/error_signup_not_approved.html', {**locals(), **_signup_flow_context(member)})
 
     stats = Sale.objects.filter(member_id=member_id).aggregate(
         total_amount=Sum('price'), total_purchases=Count('timestamp')
@@ -301,10 +301,10 @@ def send_userdata(request, room_id, member_id):
     member = Member.objects.get(pk=member_id, active=True)
 
     if not member.signup_due_paid:
-        return render(request, 'stregsystem/error_signupdue.html', locals())
+        return render(request, 'stregsystem/error_signupdue.html', {**locals(), **_signup_flow_context(member)})
 
     if not member.signup_approved():
-        return render(request, 'stregsystem/error_signup_not_approved.html', locals())
+        return render(request, 'stregsystem/error_signup_not_approved.html', {**locals(), **_signup_flow_context(member)})
 
     mail_sent = send_userdata_mail(member)
     sent_time = data_sent[member.id]
@@ -320,10 +320,10 @@ def menu_userpay(request, room_id, member_id):
     member = Member.objects.get(pk=member_id, active=True)
 
     if not member.signup_due_paid:
-        return render(request, 'stregsystem/error_signupdue.html', locals())
+        return render(request, 'stregsystem/error_signupdue.html', {**locals(), **_signup_flow_context(member)})
 
     if not member.signup_approved():
-        return render(request, 'stregsystem/error_signup_not_approved.html', locals())
+        return render(request, 'stregsystem/error_signup_not_approved.html', {**locals(), **_signup_flow_context(member)})
 
     amounts = {100, 200}
 
@@ -349,10 +349,10 @@ def menu_userrank(request, room_id, member_id):
     member = Member.objects.get(pk=member_id, active=True)
 
     if not member.signup_due_paid:
-        return render(request, 'stregsystem/error_signupdue.html', locals())
+        return render(request, 'stregsystem/error_signupdue.html', {**locals(), **_signup_flow_context(member)})
 
     if not member.signup_approved():
-        return render(request, 'stregsystem/error_signup_not_approved.html', locals())
+        return render(request, 'stregsystem/error_signup_not_approved.html', {**locals(), **_signup_flow_context(member)})
 
     def ranking(category_ids, from_d, to_d):
         qs = (
@@ -432,10 +432,10 @@ def menu_sale(request, room_id, member_id, product_id=None):
     member = Member.objects.get(pk=member_id, active=True)
 
     if not member.signup_due_paid:
-        return render(request, 'stregsystem/error_signupdue.html', locals())
+        return render(request, 'stregsystem/error_signupdue.html', {**locals(), **_signup_flow_context(member)})
 
     if not member.signup_approved():
-        return render(request, 'stregsystem/error_signup_not_approved.html', locals())
+        return render(request, 'stregsystem/error_signup_not_approved.html', {**locals(), **_signup_flow_context(member)})
 
     product = None
     if request.method == 'POST':
@@ -632,6 +632,23 @@ def perform_signup(validated_form: SignupForm) -> PendingSignup:
     return signup_request
 
 
+def _signup_flow_context(member):
+    """Build context dict for signup flow-state pages (pending payment / pending approval)."""
+    context = {}
+    try:
+        pending_signup = PendingSignup.objects.get(member=member)
+        context['pending_signup'] = pending_signup
+        mobilepay_url = pending_signup.generate_mobilepay_url()
+        context['mobilepay_url'] = mobilepay_url
+        qr = io.BytesIO()
+        qrcode.make(mobilepay_url, image_factory=qrcode.image.svg.SvgPathFillImage).save(qr)
+        context['mobilepay_qr_svg'] = qr.getvalue().decode('utf-8').splitlines()[1]
+        qr.close()
+    except PendingSignup.DoesNotExist:
+        pass
+    return context
+
+
 def signup(request):
     is_post = request.method == "POST"
     form = SignupForm(request.POST) if is_post else SignupForm()
@@ -654,15 +671,9 @@ def signup_status(request, signup_id):
     except PendingSignup.DoesNotExist:
         return redirect('signup')
 
-    mobilepay_url = pending_signup.generate_mobilepay_url()
-
-    qr = io.BytesIO()
-    qrcode.make(mobilepay_url, image_factory=qrcode.image.svg.SvgPathFillImage).save(qr)
-
-    mobilepay_qr_svg = qr.getvalue().decode('utf-8').splitlines()[1]
-    qr.close()
-
-    return render(request, "stregsystem/signup_status.html", locals())
+    context = _signup_flow_context(pending_signup.member)
+    context['pending_signup'] = pending_signup
+    return render(request, "stregsystem/signup_status.html", context)
 
 
 def get_active_items(request):

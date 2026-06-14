@@ -2,18 +2,32 @@
 
 {% load stregsystem_extras %}
 
-{% block title %}F-Klub Tilmelding{% endblock %}
+{% block title %}F-Klub Tilmelding - Betaling{% endblock %}
 
 {% block content %}
-    <center>
-        <p>
-            Du mangler at betale {{ pending_signup.due|money }}.- kr. for at fulføre din tilmelding. <br/>
-            Scan nedenstående QR-kode med din Mobilepay app for at betale.
-            Mobile brugere kan trykke på QR-koden i stedet.<br/><br/>
-        </p>
-        <br/><br/>
+<main class="signup-flow">
+    <ol class="signup-steps">
+        <li class="done">Opret konto</li>
+        <li class="current">Betal gebyr</li>
+        <li>Godkendelse</li>
+    </ol>
+
+    <div class="status-card">
+        <h2>Konto oprettet &ndash; betal oprettelsesgebyr</h2>
+
+        <div class="info-box">
+            <p>Du mangler at betale <strong>{{ pending_signup.due|money }} kr.</strong> for at fuldf&oslash;re din tilmelding.</p>
+            <p>Scan QR-koden med MobilePay eller tryk p&aring; den p&aring; mobil.</p>
+        </div>
+
         <a href="{{ mobilepay_url }}">{{ mobilepay_qr_svg|safe }}</a>
-        <br/><br/>
-        <input type="button" onclick="location.href='/';" value="Færdig" tabindex="1">
-    </center>
+
+        <div class="info-box">
+            <h3>Hvad sker der nu?</h3>
+            <p>N&aring;r vi har modtaget din betaling, skal din konto godkendes af personalet. Du f&aring;r en velkomst-email n&aring;r alt er klart.</p>
+        </div>
+
+        <input type="button" onclick="location.href='/';" value="Til forsiden" tabindex="1">
+    </div>
+</main>
 {% endblock %}
