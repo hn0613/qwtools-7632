@@ -10,19 +10,16 @@ br.clear {
 	padding: 0;
 }
 
-.clearfix:after {
-  content: "";
-  display: table;
-  clear: both;
-}
-
 #statscontainer {
 	padding: 10px;
 	background-color: #EDF2F6;
 	box-shadow: inset 0 8px 6px -6px rgba(0, 0, 0, .2);
 }
 
-.column-container {
+.column-container,
+.row {
+	display: flex;
+	flex-wrap: wrap;
 	box-sizing: border-box;
 	width: 100%;
 }
@@ -38,15 +35,7 @@ br.clear {
 
 [class*='col-'] {
 	padding: 10px;
-	float: left;
-	min-height: 1px; 
 	box-sizing: border-box;
-}
-.row:before, 
-.row:after {
-	content:"";
-	display: table ;
-	clear:both;
 }
 
 .col-1 {
@@ -69,23 +58,16 @@ br.clear {
 }
 
 @media all and (max-width:1450px){
-	.col-1{ width: 33.33%;  }
-	.col-2{ width: 50%;     }
+	#topline .col-2 { width: 33.33%; }
+	.row .col-2{ width: 50%;     }
+	.row .col-1{ width: 25%;     }
 	.col-3{ width: 100%;  }
 	.col-4{ width: 100%;    }
 	.col-5{ width: 100%;    }
 	.col-6{ width: 100%;    }
-
-	.row .col-2:last-of-type{
-		width: 100%; 
-	}
-
-	.row .col-5 ~ .col-1{
-		width: 100%; 
-	}
 }
 @media all and (max-width:850px){
-	.col-1{ width: 50%;     }
+	.col-1{ width: 100%;    }
 	.col-2{ width: 100%;    }
 	.col-3{ width: 100%;    }
 	.col-4{ width: 100%;    }
@@ -99,8 +81,6 @@ br.clear {
 }
 
 .panel {
-	float: left;
-
 	padding: 10px;
 	width: 100%;
 
@@ -110,11 +90,24 @@ br.clear {
 	border-radius: 5px;
 	box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
 
-	overflow: hidden;
+	overflow: visible;
 }
 
 .panel table {
 	width: 100%;
+	min-width: 100%;
+	border-collapse: collapse;
+}
+
+.panel table th,
+.panel table td {
+	white-space: nowrap;
+	padding: 6px 8px;
+}
+
+.table-scroll-wrapper {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
 }
 
 #topline .panel {
@@ -165,11 +158,30 @@ br.clear {
 	margin-top: 0;
 	margin-bottom: 0;
 	padding: 10px;
-	padding-top: 0;
+	padding-top: 5px;
 
 	background-color: inherit;
-	color: #9D9D9D;
+	color: #555;
 
+	font-size: 0.85em;
+	font-weight: 600;
+	text-transform: uppercase;
+}
+
+.chart-loading {
+	text-align: center;
+	padding: 60px 20px;
+	color: #6F7E95;
 	font-size: 1.1em;
-	font-weight: normal;
+}
+
+.chart-error {
+	text-align: center;
+	padding: 40px 20px;
+	color: #856404;
+	background-color: #fff3cd;
+	border: 1px solid #ffc107;
+	border-radius: 4px;
+	margin: 10px 0;
+	line-height: 1.6;
 }
