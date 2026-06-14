@@ -16,79 +16,167 @@
     <div class="dummy"></div>
 
     <script>
-    var queue = [].slice.call(document.querySelectorAll(".dummy"));
-    var front = queue.shift();
-    var this_id = -1;
-    var currentDuration = 10000;
+    (function() {
+        "use strict";
 
-    function swap(tag) {
-        //Flip in the DOM
-        front.classList.remove("front");
+        var buffers = [].slice.call(document.querySelectorAll(".dummy"));
+        var frontIdx = 0;
+        var currentId = -1;
+        var displayDuration = 10000;
+        var nextDuration = 10000;
+        var contentReady = true;
+        var pendingAdvance = false;
+        var timerId = null;
+        var activeXhr = null;
+        var FALLBACK_BG = 'url("{% static "kiosk/kioskbg.png" %}")';
 
-        queue.push(front);
-        front = queue.shift();
+        function getBack() {
+            return buffers[1 - frontIdx];
+        }
 
-        front.classList.add("front");
-    }
+        // Release media resources before replacing buffer content.
+        // This prevents video/iframe accumulation over long runtimes.
+        function cleanBuffer(el) {
+            var videos = el.getElementsByTagName("video");
+            for (var i = videos.length - 1; i >= 0; i--) {
+                videos[i].pause();
+            }
+            var iframes = el.getElementsByTagName("iframe");
+            for (var i = iframes.length - 1; i >= 0; i--) {
+                iframes[i].src = "about:blank";
+            }
+            el.innerHTML = "";
+            el.style.backgroundImage = "";
+        }
 
-    function updateKiosk() {
-        var t = front;
-        t.addEventListener("transitionend", function loadnext(tag) {
-            t.removeEventListener("transitionend", loadnext);
-            var xmlHttp = new XMLHttpRequest();
-            xmlHttp.onreadystatechange = function() {
-                if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-                    obj = JSON.parse(xmlHttp.responseText);
-                    this_id = obj.id;
-                    t.style.backgroundImage = '';
-                    if (obj.has_media) {
-                        if (!obj.is_image) {
-                            t.style.backgroundImage = '';
-                            t.innerHTML = //
-                                '<center class="scale">' + //
-                                '<video class="scale" autoplay muted loop id="video"><source src="' + obj.url + '" type="video/mp4">' + //
-                                '</video>'+ //
-                                '</center>';
-                        } else {
-                            t.innerHTML = '';
-                            t.style.backgroundImage = 'url("' + obj.url +'")';
-                        }
-                    } else {
-                        t.style.backgroundImage = '';
-                        t.innerHTML = 
-                            '<iframe class="scale" ' +
-                            'src="' + obj.url + '" ' +
-                            'style="width:100%;height:100%;border:none;"></iframe>';
-                    }
-
-                    // Use the duration from the server response
-                    currentDuration = obj.duration || 10000;  // Default to 10 seconds if not provided
-                } else if (xmlHttp.readyState == 4) {
-                    // Response received, but no image was sent from server
-                    t.style.backgroundImage = 'url("{% static "kiosk/kioskbg.png" %}")';
-                    this_id = -1;
+        function renderContent(el, item) {
+            cleanBuffer(el);
+            if (item.has_media) {
+                if (item.is_image) {
+                    el.style.backgroundImage = 'url("' + item.url + '")';
+                } else {
+                    el.innerHTML =
+                        '<center class="scale">' +
+                        '<video class="scale" autoplay muted loop>' +
+                        '<source src="' + item.url + '" type="video/mp4">' +
+                        '</video></center>';
                 }
-            }
-
-            //Start by asking random for the first image
-            if(this_id === -1) {
-                xmlHttp.open("GET", "/kiosk/random", true);
             } else {
-                xmlHttp.open("GET", "/kiosk/next_real/" + this_id + "/", true);
+                el.innerHTML =
+                    '<iframe class="scale" src="' + item.url + '" ' +
+                    'style="width:100%;height:100%;border:none;"></iframe>';
             }
-            xmlHttp.send(null);
+        }
 
-        });
+        function renderFallback(el) {
+            cleanBuffer(el);
+            el.style.backgroundImage = FALLBACK_BG;
+        }
 
-        swap();
+        function swap() {
+            buffers[frontIdx].classList.remove("front");
+            frontIdx = 1 - frontIdx;
+            buffers[frontIdx].classList.add("front");
+        }
 
-        // Set a timeout to update the kiosk again after the dynamic duration
-        setTimeout(updateKiosk, currentDuration);
-    }
+        function scheduleNext(delay) {
+            if (timerId !== null) {
+                clearTimeout(timerId);
+            }
+            timerId = setTimeout(advance, delay);
+        }
 
-    // Initial call to start the cycle
-    updateKiosk();
+        // Core state transition: swap visible buffer and begin loading next item.
+        // Only proceeds when the back buffer has content ready (contentReady === true).
+        function doAdvance() {
+            pendingAdvance = false;
+            swap();
+            contentReady = false;
+            displayDuration = nextDuration;
+            scheduleNext(displayDuration);
+            loadNext();
+        }
 
+        function advance() {
+            timerId = null;
+            if (!contentReady) {
+                // Timer fired but next content isn't loaded yet.
+                // Mark as pending — doAdvance will run as soon as content arrives.
+                pendingAdvance = true;
+                return;
+            }
+            doAdvance();
+        }
+
+        function onContentLoaded() {
+            contentReady = true;
+            if (pendingAdvance) {
+                doAdvance();
+            }
+        }
+
+        function handleLoadFailure() {
+            var back = getBack();
+            currentId = -1;
+            nextDuration = 10000;
+            renderFallback(back);
+            onContentLoaded();
+        }
+
+        function loadNext() {
+            if (activeXhr) {
+                activeXhr.onload = null;
+                activeXhr.onerror = null;
+                activeXhr.ontimeout = null;
+                activeXhr.abort();
+                activeXhr = null;
+            }
+
+            var back = getBack();
+            var xhr = new XMLHttpRequest();
+            activeXhr = xhr;
+
+            xhr.onload = function() {
+                if (xhr !== activeXhr) return;
+                activeXhr = null;
+                if (xhr.status === 200) {
+                    try {
+                        var item = JSON.parse(xhr.responseText);
+                        currentId = item.id;
+                        nextDuration = item.duration || 10000;
+                        renderContent(back, item);
+                        onContentLoaded();
+                    } catch (e) {
+                        handleLoadFailure();
+                    }
+                } else {
+                    handleLoadFailure();
+                }
+            };
+
+            xhr.onerror = function() {
+                if (xhr !== activeXhr) return;
+                activeXhr = null;
+                handleLoadFailure();
+            };
+
+            xhr.ontimeout = function() {
+                if (xhr !== activeXhr) return;
+                activeXhr = null;
+                handleLoadFailure();
+            };
+
+            xhr.open("GET", currentId === -1
+                ? "/kiosk/random"
+                : "/kiosk/next_real/" + currentId + "/",
+                true);
+            xhr.timeout = 15000;
+            xhr.send(null);
+        }
+
+        // Start the cycle
+        advance();
+    })();
     </script>
 </body>
 

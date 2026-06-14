@@ -43,7 +43,10 @@ def find_random_media(request):
 
 
 def find_next_media_real(request, item_id):
-    item = KioskItem.objects.get(pk=item_id)
+    try:
+        item = KioskItem.objects.get(pk=item_id)
+    except KioskItem.DoesNotExist:
+        raise Http404("Kiosk item not found")
 
     item_count = (
         KioskItem.objects.filter(active=True)
